@@ -78,7 +78,7 @@
     <div class="game-container">
         <div class="score">Score: <span id="score">0</span></div>
         <canvas id="gameCanvas" class="game-board" width="400" height="400"></canvas>
-        <div class="controls">Use arrow keys to move</div>
+        <div class="controls">Use arrow keys to move | Press 'P' to pause</div>
     </div>
     
     <div class="game-over" id="gameOver">
@@ -104,6 +104,9 @@
         let food = generateFood();
         let score = 0;
         let gameRunning = false;
+        let isPaused = false;
+        let gameSpeed = 100;
+        let gameInterval;
 
         function generateFood() {
             let newFood;
@@ -133,7 +136,7 @@
         }
 
         function update() {
-            if (!gameRunning) return;
+            if (!gameRunning || isPaused) return;
 
             // Move snake
             const head = {x: snake[0].x + direction.x, y: snake[0].y + direction.y};
@@ -157,6 +160,13 @@
                 score += 10;
                 scoreElement.textContent = score;
                 food = generateFood();
+                
+                // Increase game speed based on score
+                if (score % 50 === 0 && gameSpeed > 50) {
+                    gameSpeed -= 10;
+                    clearInterval(gameInterval);
+                    gameInterval = setInterval(gameLoop, gameSpeed);
+                }
             } else {
                 snake.pop();
             }
@@ -169,23 +179,37 @@
 
         function startGame() {
             gameRunning = true;
+            isPaused = false;
+            gameSpeed = 100;
             direction = {x: 1, y: 0};
             gameOverElement.style.display = 'none';
+            
+            clearInterval(gameInterval);
+            gameInterval = setInterval(gameLoop, gameSpeed);
         }
 
         function endGame() {
             gameRunning = false;
+            isPaused = false;
+            clearInterval(gameInterval);
             finalScoreElement.textContent = score;
             gameOverElement.style.display = 'block';
         }
 
         function restartGame() {
+            clearInterval(gameInterval);
             snake = [{x: 10, y: 10}];
             direction = {x: 0, y: 0};
             food = generateFood();
             score = 0;
             scoreElement.textContent = score;
+            isPaused = false;
             startGame();
+        }
+
+        function togglePause() {
+            if (!gameRunning) return;
+            isPaused = !isPaused;
         }
 
         // Keyboard controls
@@ -195,24 +219,30 @@
                 return;
             }
 
+            // Handle pause with 'P' key
+            if (e.key.toLowerCase() === 'p') {
+                togglePause();
+                return;
+            }
+
             switch(e.key) {
                 case 'ArrowUp':
-                    if (direction.y === 0) {
+                    if (direction.y === 0 && !isPaused) {
                         direction = {x: 0, y: -1};
                     }
                     break;
                 case 'ArrowDown':
-                    if (direction.y === 0) {
+                    if (direction.y === 0 && !isPaused) {
                         direction = {x: 0, y: 1};
                     }
                     break;
                 case 'ArrowLeft':
-                    if (direction.x === 0) {
+                    if (direction.x === 0 && !isPaused) {
                         direction = {x: -1, y: 0};
                     }
                     break;
                 case 'ArrowRight':
-                    if (direction.x === 0) {
+                    if (direction.x === 0 && !isPaused) {
                         direction = {x: 1, y: 0};
                     }
                     break;
@@ -222,7 +252,6 @@
         // Start the game
         draw();
         startGame();
-        setInterval(gameLoop, 100);
     </script>
 </body>
 </html>
